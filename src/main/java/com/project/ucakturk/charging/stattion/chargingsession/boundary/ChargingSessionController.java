@@ -2,7 +2,9 @@ package com.project.ucakturk.charging.stattion.chargingsession.boundary;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +33,22 @@ public class ChargingSessionController {
             ChargingSessionResponseDto chargingSessionResponseDto =
                 chargingSessionService.create(chargingSessionPostRequestDto);
             log.info("Submitting new charging session {} is finished", chargingSessionResponseDto.getStationId());
+            return ResponseEntity.ok().body(chargingSessionResponseDto);
+        } catch (ChargingSessionValidationException e) {
+            log.warn(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(e.getMessage()));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorDto(e.getMessage()));
+        }
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity stopCharging(@PathVariable("id") String id) {
+        try {
+            log.info("Updating charging session is started");
+            ChargingSessionResponseDto chargingSessionResponseDto = chargingSessionService.stopCharging(id);
+            log.info("Updating charging session is finished");
             return ResponseEntity.ok().body(chargingSessionResponseDto);
         } catch (ChargingSessionValidationException e) {
             log.warn(e.getMessage());

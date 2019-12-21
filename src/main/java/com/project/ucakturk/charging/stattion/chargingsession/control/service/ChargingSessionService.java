@@ -3,7 +3,6 @@ package com.project.ucakturk.charging.stattion.chargingsession.control.service;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -24,20 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 public class ChargingSessionService {
 
     private static final Map<UUID, ChargingSession> CHARGING_SESSION_MAP = new HashMap<>();
+    private final ChargingSessionValidationService chargingSessionValidationService;
 
     public ChargingSessionResponseDto create(ChargingSessionPostRequestDto chargingSessionPostRequestDto)
         throws ChargingSessionValidationException {
-        validateChargingSession(chargingSessionPostRequestDto);
+        chargingSessionValidationService.validateChargingSession(chargingSessionPostRequestDto);
         ChargingSession chargingSession = buildChargingSession(chargingSessionPostRequestDto);
         CHARGING_SESSION_MAP.put(chargingSession.getId(), chargingSession);
         return ChargingSessionMapper.getInstance().chargingSessionToDto(chargingSession);
-    }
-
-    private void validateChargingSession(ChargingSessionPostRequestDto chargingSessionPostRequestDto)
-        throws ChargingSessionValidationException {
-        if (Objects.isNull(chargingSessionPostRequestDto.getStationId())) {
-            throw new ChargingSessionValidationException("Station Id cannot be null!");
-        }
     }
 
     private ChargingSession buildChargingSession(ChargingSessionPostRequestDto chargingSessionPostRequestDto) {
@@ -48,4 +41,13 @@ public class ChargingSessionService {
             .status(StatusEnum.IN_PROGRESS)
             .build();
     }
+
+    public ChargingSessionResponseDto stopCharging(String id) throws ChargingSessionValidationException {
+        ChargingSession chargingSession = CHARGING_SESSION_MAP.get(UUID.fromString(id));
+        chargingSessionValidationService.validateForStoppingSession(UUID.fromString(id), chargingSession);
+        chargingSession.setStatus(StatusEnum.FINISHED);
+        chargingSession.setStoppedAt(LocalDateTime.now());
+        return ChargingSessionMapper.getInstance().chargingSessionToDto(chargingSession);
+    }
+
 }
