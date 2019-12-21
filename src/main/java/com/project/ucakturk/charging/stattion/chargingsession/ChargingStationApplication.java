@@ -1,4 +1,4 @@
-package com.project.ucakturk.charging.stattion.chargingstation;
+package com.project.ucakturk.charging.stattion.chargingsession;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
