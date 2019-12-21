@@ -2,7 +2,9 @@ package com.project.ucakturk.charging.stattion.chargingsession.control.service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +13,7 @@ import com.project.ucakturk.charging.stattion.chargingsession.control.exception.
 import com.project.ucakturk.charging.stattion.chargingsession.control.mapper.ChargingSessionMapper;
 import com.project.ucakturk.charging.stattion.chargingsession.entity.dto.ChargingSessionPostRequestDto;
 import com.project.ucakturk.charging.stattion.chargingsession.entity.dto.ChargingSessionResponseDto;
+import com.project.ucakturk.charging.stattion.chargingsession.entity.dto.ChargingSessionSummaryResponseDto;
 import com.project.ucakturk.charging.stattion.chargingsession.entity.enums.StatusEnum;
 import com.project.ucakturk.charging.stattion.chargingsession.entity.table.ChargingSession;
 
@@ -50,4 +53,31 @@ public class ChargingSessionService {
         return ChargingSessionMapper.getInstance().chargingSessionToDto(chargingSession);
     }
 
+    public List<ChargingSessionResponseDto> getAllChargingSessions() {
+        return ChargingSessionMapper.getInstance().chargingSessionListToDtoList(CHARGING_SESSION_MAP.values());
+    }
+
+    public ChargingSessionSummaryResponseDto getSummaryOfSessions() {
+        long startedSessionsInLastMinute = CHARGING_SESSION_MAP.values()
+            .stream()
+            .filter(
+                chargingSession -> LocalDateTime.now().minusMinutes(1).compareTo(chargingSession.getStartedAt()) < 0)
+            .count();
+        long stoppedSessionsInLastMinute = CHARGING_SESSION_MAP.values()
+            .stream()
+            .filter(chargingSession -> Objects.nonNull(chargingSession.getStoppedAt()))
+            .filter(
+                chargingSession -> LocalDateTime.now().minusMinutes(1).compareTo(chargingSession.getStoppedAt()) < 0)
+            .count();
+        return buildSummaryChargingSession(startedSessionsInLastMinute, stoppedSessionsInLastMinute);
+    }
+
+    private ChargingSessionSummaryResponseDto buildSummaryChargingSession(long startedSessionsInLastMinute,
+        long stoppedSessionsInLastMinute) {
+        return ChargingSessionSummaryResponseDto.builder()
+            .startedCount(startedSessionsInLastMinute)
+            .stoppedCount(stoppedSessionsInLastMinute)
+            .totalCount(startedSessionsInLastMinute + stoppedSessionsInLastMinute)
+            .build();
+    }
 }
